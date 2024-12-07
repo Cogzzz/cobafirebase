@@ -2,7 +2,6 @@ package c14220127.paba_b.cobafirebase
 
 import android.os.Bundle
 import android.util.Log
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
@@ -32,10 +31,29 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
         etProvinsi = findViewById<EditText>(R.id.etProvinsi)
         etIbukota = findViewById<EditText>(R.id.etIbukota)
         val btnSimpan = findViewById<Button>(R.id.btnSimpan)
         val lvData = findViewById<ListView>(R.id.lvData)
+
+        lvData.setOnItemLongClickListener { parent, view, position, id ->
+            val namaPro = data[position].get("Pro")
+            if (namaPro != null) {
+                DB.collection("tbProvinsi")
+                    .document(namaPro.toString())
+                    .delete()
+                    .addOnSuccessListener {
+                        Log.d("Firebase", "Data berhasil Dihapus")
+                        readData(DB)
+            }
+                .addOnFailureListener {
+                    Log.w("Firebase", it.message.toString())
+                }
+            }
+            true
+        }
+
 
         lvAdapter = SimpleAdapter(
             this, data, android.R.layout.simple_list_item_2, arrayOf("Pro", "Ibu"), intArrayOf(
@@ -50,13 +68,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun TambahData(db: FirebaseFirestore, provinsi: String, ibukota: String) {
-        val datBaru = daftarProvinsi(provinsi, ibukota)
+        val dataBaru = daftarProvinsi(provinsi, ibukota)
         db.collection("tbProvinsi")
-            .add(datBaru)
+            .document(dataBaru.provinsi)
+            .set(dataBaru)
             .addOnSuccessListener {
                 etProvinsi.setText("")
                 etIbukota.setText("")
                 Log.d("Firebase", "Data berhasil Disimpan")
+                readData(db)
             }
 
             .addOnFailureListener {
