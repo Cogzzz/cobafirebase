@@ -6,6 +6,7 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
+import android.widget.SimpleAdapter
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -17,10 +18,10 @@ import com.google.firebase.firestore.firestore
 class MainActivity : AppCompatActivity() {
     val DB = Firebase.firestore
     var DataProvinsi = ArrayList<daftarProvinsi>()
-    lateinit var lvAdapter: ArrayAdapter<daftarProvinsi>
+    lateinit var lvAdapter: SimpleAdapter
     lateinit var etProvinsi: EditText
     lateinit var etIbukota: EditText
-    var data : MutableList<Map<String, Any>> = ArrayList()
+    var data: MutableList<Map<String, Any>> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,7 +37,11 @@ class MainActivity : AppCompatActivity() {
         val btnSimpan = findViewById<Button>(R.id.btnSimpan)
         val lvData = findViewById<ListView>(R.id.lvData)
 
-        lvAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, DataProvinsi)
+        lvAdapter = SimpleAdapter(
+            this, data, android.R.layout.simple_list_item_2, arrayOf("Pro", "Ibu"), intArrayOf(
+                android.R.id.text1, android.R.id.text2
+            )
+        )
         lvData.adapter = lvAdapter
 
         btnSimpan.setOnClickListener {
@@ -60,21 +65,27 @@ class MainActivity : AppCompatActivity() {
         readData(db)
     }
 
-    fun readData(db: FirebaseFirestore){
+    fun readData(db: FirebaseFirestore) {
         db.collection("tbProvinsi").get()
-            .addOnSuccessListener {
-                result ->
+            .addOnSuccessListener { result ->
                 DataProvinsi.clear()
-                for (document in result){
+                for (document in result) {
                     val readData = daftarProvinsi(
                         document.data["provinsi"].toString(),
                         document.data["ibukota"].toString()
                     )
                     DataProvinsi.add(readData)
+                    data.clear()
+                    DataProvinsi.forEach {
+                        val dt: MutableMap<String, String> = HashMap(2)
+                        dt["Pro"] = it.provinsi
+                        dt["Ibu"] = it.ibukota
+                        data.add(dt)
+                    }
                 }
                 lvAdapter.notifyDataSetChanged()
             }
-            .addOnFailureListener{
+            .addOnFailureListener {
                 Log.d("Firebase", it.message.toString())
             }
     }
